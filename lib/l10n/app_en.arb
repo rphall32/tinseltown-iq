@@ -1,0 +1,373 @@
+{
+  "@@locale": "en",
+  "@@last_modified": "2024-01-01T00:00:00.000Z",
+  
+  "appTitle": "Tinseltown IQ",
+  "@appTitle": {
+    "description": "The title of the application"
+  },
+  
+  "welcome": "Welcome",
+  "@welcome": {
+    "description": "Welcome greeting"
+  },
+  
+  "welcomeBack": "Welcome back",
+  "@welcomeBack": {
+    "description": "Welcome back greeting for returning users"
+  },
+  
+  "signIn": "Sign In",
+  "@signIn": {
+    "description": "Sign in button text"
+  },
+  
+  "signUp": "Sign Up",
+  "@signUp": {
+    "description": "Sign up button text"
+  },
+  
+  "signOut": "Sign Out",
+  "@signOut": {
+    "description": "Sign out button text"
+  },
+  
+  "email": "Email",
+  "@email": {
+    "description": "Email field label"
+  },
+  
+  "password": "Password",
+  "@password": {
+    "description": "Password field label"
+  },
+  
+  "forgotPassword": "Forgot Password?",
+  "@forgotPassword": {
+    "description": "Forgot password link text"
+  },
+  
+  "home": "Home",
+  "@home": {
+    "description": "Home tab label"
+  },
+  
+  "projects": "Projects",
+  "@projects": {
+    "description": "Projects tab label"
+  },
+  
+  "newScan": "New Scan",
+  "@newScan": {
+    "description": "New scan button text"
+  },
+  
+  "profile": "Profile",
+  "@profile": {
+    "description": "Profile tab label"
+  },
+  
+  "settings": "Settings",
+  "@settings": {
+    "description": "Settings screen title"
+  },
+  
+  "darkMode": "Dark Mode",
+  "@darkMode": {
+    "description": "Dark mode setting"
+  },
+  
+  "lightMode": "Light Mode",
+  "@lightMode": {
+    "description": "Light mode setting"
+  },
+  
+  "systemDefault": "System Default",
+  "@systemDefault": {
+    "description": "System default theme option"
+  },
+  
+  "language": "Language",
+  "@language": {
+    "description": "Language setting label"
+  },
+  
+  "notifications": "Notifications",
+  "@notifications": {
+    "description": "Notifications setting section"
+  },
+  
+  "greenlightScore": "GreenlightIQ Score",
+  "@greenlightScore": {
+    "description": "The main score label"
+  },
+  
+  "scoreOutOf100": "Score: {score}/100",
+  "@scoreOutOf100": {
+    "description": "Score display with value",
+    "placeholders": {
+      "score": {
+        "type": "int",
+        "example": "85"
+      }
+    }
+  },
+  
+  "analyzing": "Analyzing...",
+  "@analyzing": {
+    "description": "Text shown during analysis"
+  },
+  
+  "analysisComplete": "Analysis Complete",
+  "@analysisComplete": {
+    "description": "Shown when analysis finishes"
+  },
+  
+  "projectTitle": "Project Title",
+  "@projectTitle": {
+    "description": "Project title field label"
+  },
+  
+  "logline": "Logline",
+  "@logline": {
+    "description": "Logline field label"
+  },
+  
+  "synopsis": "Synopsis",
+  "@synopsis": {
+    "description": "Synopsis field label"
+  },
+  
+  "genre": "Genre",
+  "@genre": {
+    "description": "Genre field label"
+  },
+  
+  "format": "Format",
+  "@format": {
+    "description": "Format field label"
+  },
+  
+  "analyze": "Analyze",
+  "@analyze": {
+    "description": "Analyze button text"
+  },
+  
+  "reAnalyze": "Re-Analyze",
+  "@reAnalyze": {
+    "description": "Re-analyze button text"
+  },
+  
+  "save": "Save",
+  "@save": {
+    "description": "Save button text"
+  },
+  
+  "cancel": "Cancel",
+  "@cancel": {
+    "description": "Cancel button text"
+  },
+  
+  "delete": "Delete",
+  "@delete": {
+    "description": "Delete button text"
+  },
+  
+  "confirm": "Confirm",
+  "@confirm": {
+    "description": "Confirm button text"
+  },
+  
+  "retry": "Retry",
+  "@retry": {
+    "description": "Retry button text"
+  },
+  
+  "loading": "Loading...",
+  "@loading": {
+    "description": "Loading indicator text"
+  },
+  
+  "error": "Error",
+  "@error": {
+    "description": "Error message title"
+  },
+  
+  "success": "Success",
+  "@success": {
+    "description": "Success message title"
+  },
+  
+  "somethingWentWrong": "Something went wrong",
+  "@somethingWentWrong": {
+    "description": "Generic error message"
+  },
+  
+  "tryAgain": "Try Again",
+  "@tryAgain": {
+    "description": "Try again button text"
+  },
+  
+  "noProjectsYet": "No projects yet",
+  "@noProjectsYet": {
+    "description": "Empty state message for projects"
+  },
+  
+  "createFirstProject": "Create your first project to get started",
+  "@createFirstProject": {
+    "description": "Empty state action prompt"
+  },
+  
+  "searchProjects": "Search projects...",
+  "@searchProjects": {
+    "description": "Search placeholder for projects"
+  },
+  
+  "subscription": "Subscription",
+  "@subscription": {
+    "description": "Subscription section title"
+  },
+  
+  "freePlan": "Free Plan",
+  "@freePlan": {
+    "description": "Free plan name"
+  },
+  
+  "proPlan": "Pro Plan",
+  "@proPlan": {
+    "description": "Pro plan name"
+  },
+  
+  "studioPlan": "Studio Plan",
+  "@studioPlan": {
+    "description": "Studio plan name"
+  },
+  
+  "upgrade": "Upgrade",
+  "@upgrade": {
+    "description": "Upgrade button text"
+  },
+  
+  "scansRemaining": "{count, plural, =0{No scans remaining} =1{1 scan remaining} other{{count} scans remaining}}",
+  "@scansRemaining": {
+    "description": "Number of scans remaining",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  
+  "lastUpdated": "Last updated {date}",
+  "@lastUpdated": {
+    "description": "Last updated timestamp",
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "2 hours ago"
+      }
+    }
+  },
+  
+  "createdOn": "Created on {date}",
+  "@createdOn": {
+    "description": "Creation date",
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "January 15, 2024"
+      }
+    }
+  },
+  
+  "compareProjects": "Compare Projects",
+  "@compareProjects": {
+    "description": "Compare projects feature title"
+  },
+  
+  "selectProjectsToCompare": "Select up to 3 projects to compare",
+  "@selectProjectsToCompare": {
+    "description": "Compare selection instruction"
+  },
+  
+  "marketInsights": "Market Insights",
+  "@marketInsights": {
+    "description": "Market insights section title"
+  },
+  
+  "creativeFeedback": "Creative Feedback",
+  "@creativeFeedback": {
+    "description": "Creative feedback section title"
+  },
+  
+  "topBuyers": "Top Buyers",
+  "@topBuyers": {
+    "description": "Top buyers section title"
+  },
+  
+  "similarTitles": "Similar Titles",
+  "@similarTitles": {
+    "description": "Similar titles section title"
+  },
+  
+  "exportPdf": "Export PDF",
+  "@exportPdf": {
+    "description": "Export PDF button text"
+  },
+  
+  "share": "Share",
+  "@share": {
+    "description": "Share button text"
+  },
+  
+  "addToFavorites": "Add to Favorites",
+  "@addToFavorites": {
+    "description": "Add to favorites action"
+  },
+  
+  "removeFromFavorites": "Remove from Favorites",
+  "@removeFromFavorites": {
+    "description": "Remove from favorites action"
+  },
+  
+  "favorites": "Favorites",
+  "@favorites": {
+    "description": "Favorites section title"
+  },
+  
+  "all": "All",
+  "@all": {
+    "description": "All filter option"
+  },
+  
+  "recent": "Recent",
+  "@recent": {
+    "description": "Recent filter option"
+  },
+  
+  "highScore": "High Score",
+  "@highScore": {
+    "description": "High score filter option"
+  },
+  
+  "offline": "Offline",
+  "@offline": {
+    "description": "Offline status indicator"
+  },
+  
+  "online": "Online",
+  "@online": {
+    "description": "Online status indicator"
+  },
+  
+  "noInternetConnection": "No internet connection",
+  "@noInternetConnection": {
+    "description": "No internet error message"
+  },
+  
+  "checkConnectionAndTryAgain": "Please check your connection and try again",
+  "@checkConnectionAndTryAgain": {
+    "description": "Connection error help text"
+  }
+}

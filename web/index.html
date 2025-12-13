@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <!--
+    If you are serving your web app in a path other than the root, change the
+    href value below to reflect the base path you are serving from.
+
+    The path provided below has to start and end with a slash "/" in order for
+    it to work correctly.
+
+    For more details:
+    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
+
+    This is a placeholder for base href that will be replaced by the value of
+    the `--base-href` argument provided to `flutter build`.
+  -->
+  <base href="$FLUTTER_BASE_HREF">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="Tinseltown IQ - Film Analysis App">
+
+  <!-- iOS meta tags & icons -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="Tinseltown IQ">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png"/>
+
+  <title>Tinseltown IQ</title>
+  <link rel="manifest" href="manifest.json">
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #14141F;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    #loading {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background-color: #14141F;
+      z-index: 9999;
+    }
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid rgba(212, 168, 75, 0.2);
+      border-top-color: #D4A84B;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .loading-text {
+      margin-top: 20px;
+      color: #9090A0;
+      font-size: 14px;
+    }
+    #error-display {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #14141F;
+      color: white;
+      padding: 40px;
+      box-sizing: border-box;
+      z-index: 10000;
+      overflow: auto;
+    }
+    .error-title {
+      color: #FF5252;
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+    .error-message {
+      color: #9090A0;
+      font-size: 14px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+  </style>
+</head>
+<body>
+  <div id="loading">
+    <div class="spinner"></div>
+    <div class="loading-text">Loading Tinseltown IQ...</div>
+  </div>
+  <div id="error-display">
+    <div class="error-title">Error Loading App</div>
+    <div class="error-message" id="error-message"></div>
+  </div>
+
+  <script>
+    window.addEventListener('error', function(e) {
+      console.error('Global error:', e);
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('error-display').style.display = 'block';
+      document.getElementById('error-message').textContent = 
+        'Error: ' + (e.message || 'Unknown error') + '\n\n' +
+        'File: ' + (e.filename || 'Unknown') + '\n' +
+        'Line: ' + (e.lineno || 'Unknown');
+    });
+
+    window.addEventListener('unhandledrejection', function(e) {
+      console.error('Unhandled rejection:', e.reason);
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('error-display').style.display = 'block';
+      document.getElementById('error-message').textContent = 
+        'Promise Rejection: ' + (e.reason?.message || e.reason || 'Unknown error');
+    });
+
+    // Hide loading when Flutter is ready
+    window.addEventListener('flutter-first-frame', function() {
+      document.getElementById('loading').style.display = 'none';
+    });
+  </script>
+
+  <script>
+    // Unregister any existing service workers first
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        for (let registration of registrations) {
+          registration.unregister();
+          console.log('Service worker unregistered');
+        }
+      });
+    }
+    
+    // Configure Flutter to use local CanvasKit and disable service worker
+    window.flutterConfiguration = {
+      canvasKitBaseUrl: "canvaskit/",
+      canvasKitVariant: "full"
+    };
+  </script>
+  <script>
+    // Custom Flutter loader without service worker
+    {{flutter_js}}
+    {{flutter_build_config}}
+    
+    _flutter.loader.load({
+      // Disable service worker
+      serviceWorkerSettings: null,
+      onEntrypointLoaded: async function(engineInitializer) {
+        console.log('Flutter entrypoint loaded');
+        document.getElementById('loading').querySelector('.loading-text').textContent = 'Initializing engine...';
+        let appRunner = await engineInitializer.initializeEngine();
+        console.log('Flutter engine initialized');
+        document.getElementById('loading').querySelector('.loading-text').textContent = 'Starting app...';
+        await appRunner.runApp();
+        console.log('Flutter app started');
+      }
+    });
+  </script>
+</body>
+</html>
