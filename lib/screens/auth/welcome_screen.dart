@@ -169,26 +169,29 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                           const SizedBox(height: 32),
 
                           // Title
-                          const Column(
+                          Column(
                             children: [
-                              Text(
-                                'TINSELTOWN',
-                                style: TextStyle(
-                                  color: AppColors.scriptPrimary,
-                                  fontSize: 36,
-                                  fontWeight: FontWeight.w200,
-                                  letterSpacing: 12,
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: const Text(
+                                  'TINSELTOWN',
+                                  style: TextStyle(
+                                    color: AppColors.scriptPrimary,
+                                    fontSize: 36,
+                                    fontWeight: FontWeight.w200,
+                                    letterSpacing: 12,
+                                  ),
                                 ),
                               ),
                               SizedBox(height: 8),
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  SizedBox(
+                                  const SizedBox(
                                     width: 60,
                                     child: Divider(color: AppColors.oscarGold, thickness: 1),
                                   ),
-                                  Padding(
+                                  const Padding(
                                     padding: EdgeInsets.symmetric(horizontal: 16),
                                     child: Text(
                                       'IQ',
@@ -200,7 +203,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                                       ),
                                     ),
                                   ),
-                                  SizedBox(
+                                  const SizedBox(
                                     width: 60,
                                     child: Divider(color: AppColors.oscarGold, thickness: 1),
                                   ),

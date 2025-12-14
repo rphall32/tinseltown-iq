@@ -6283,29 +6283,34 @@ class _DashboardTabState extends State<DashboardTab> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${_getGreeting()}, ${_getUserName()}',
-                      style: const TextStyle(
-                        color: AppColors.scriptPrimary,
-                        fontSize: 24,
-                        fontWeight: FontWeight.w600,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${_getGreeting()}, ${_getUserName()}',
+                        style: const TextStyle(
+                          color: AppColors.scriptPrimary,
+                          fontSize: 24,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      hasProjects 
-                          ? 'You have ${_storageService.projectCount} concept${_storageService.projectCount == 1 ? '' : 's'} analyzed'
-                          : 'Ready to validate your next big idea?',
-                      style: const TextStyle(
-                        color: AppColors.stageDirection,
-                        fontSize: 15,
+                      const SizedBox(height: 4),
+                      Text(
+                        hasProjects 
+                            ? 'You have ${_storageService.projectCount} concept${_storageService.projectCount == 1 ? '' : 's'} analyzed'
+                            : 'Ready to validate your next big idea?',
+                        style: const TextStyle(
+                          color: AppColors.stageDirection,
+                          fontSize: 15,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
+                const SizedBox(width: 12),
                 GestureDetector(
                   onTap: () => _showProfileMenu(context),
                   child: CircleAvatar(
@@ -9371,11 +9376,14 @@ Widget _buildUsageCardHelper(BuildContext context, UserService userService, Proj
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        'This Month',
-                        style: TextStyle(
-                          color: AppColors.stageDirection,
-                          fontSize: 12,
+                      Flexible(
+                        child: Text(
+                          'This Month',
+                          style: TextStyle(
+                            color: AppColors.stageDirection,
+                            fontSize: 12,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       if (isLow && !isEmpty)
