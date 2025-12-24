@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:flutter/foundation.dart' show kDebugMode, ChangeNotifier;
+import 'package:flutter/foundation.dart' show kDebugMode, ChangeNotifier, debugPrint;
 import 'package:in_app_purchase/in_app_purchase.dart';
 
 /// In-App Purchase Service for iOS Subscriptions
