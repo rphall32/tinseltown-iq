@@ -1,8 +1,14 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import '../../core/theme/app_colors.dart';
 import '../../main.dart' show HomeScreen, UserService, SubscriptionPlan;
+import '../../services/payment/in_app_purchase_service.dart';
 
 /// Subscription plan selection screen
+/// 
+/// Uses Apple In-App Purchase for iOS subscriptions (required by Apple guidelines).
+/// Falls back to simpler flow for other platforms.
 class PlanSelectionScreen extends StatefulWidget {
   const PlanSelectionScreen({super.key});
 
@@ -12,8 +18,11 @@ class PlanSelectionScreen extends StatefulWidget {
 
 class _PlanSelectionScreenState extends State<PlanSelectionScreen> {
   final UserService _userService = UserService();
+  final InAppPurchaseService _iapService = InAppPurchaseService();
   int _selectedPlanIndex = 0;
   bool _isLoading = false;
+  bool _iapInitialized = false;
+  String? _errorMessage;
 
   final List<_PlanInfo> _plans = [
     _PlanInfo(
@@ -27,6 +36,7 @@ class _PlanSelectionScreenState extends State<PlanSelectionScreen> {
       ],
       plan: SubscriptionPlan.free,
       color: AppColors.stageDirection,
+      productId: null, // Free plan - no IAP product
     ),
     _PlanInfo(
       name: 'Professional',
@@ -42,6 +52,7 @@ class _PlanSelectionScreenState extends State<PlanSelectionScreen> {
       plan: SubscriptionPlan.professional,
       color: AppColors.oscarGold,
       isPopular: true,
+      productId: InAppPurchaseService.professionalMonthlyProductId,
     ),
     _PlanInfo(
       name: 'Studio',
@@ -57,15 +68,162 @@ class _PlanSelectionScreenState extends State<PlanSelectionScreen> {
       ],
       plan: SubscriptionPlan.studio,
       color: AppColors.greenlightNeon,
+      productId: InAppPurchaseService.studioMonthlyProductId,
     ),
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    _initializeIAP();
+  }
+
+  /// Initialize In-App Purchase service for iOS
+  Future<void> _initializeIAP() async {
+    if (!_isApplePlatform) {
+      setState(() => _iapInitialized = true);
+      return;
+    }
+
+    try {
+      await _iapService.initialize();
+      
+      // Set up purchase callbacks
+      _iapService.onPurchaseSuccess = _onPurchaseSuccess;
+      _iapService.onPurchaseError = _onPurchaseError;
+      _iapService.onPurchaseCancelled = _onPurchaseCancelled;
+      
+      // Update prices from App Store if available
+      _updatePricesFromAppStore();
+      
+      setState(() => _iapInitialized = true);
+      
+      if (kDebugMode) {
+        debugPrint('✅ IAP initialized for plan selection');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('⚠️ IAP initialization failed: $e');
+      }
+      // Continue without IAP - will fall back to basic flow
+      setState(() => _iapInitialized = true);
+    }
+  }
+
+  /// Update plan prices from App Store (if products are available)
+  void _updatePricesFromAppStore() {
+    final professionalProduct = _iapService.professionalProduct;
+    final studioProduct = _iapService.studioProduct;
+    
+    // Update prices if products are loaded from App Store
+    if (professionalProduct != null) {
+      _plans[1] = _plans[1].copyWith(price: professionalProduct.price);
+    }
+    if (studioProduct != null) {
+      _plans[2] = _plans[2].copyWith(price: studioProduct.price);
+    }
+  }
+
+  bool get _isApplePlatform {
+    try {
+      return Platform.isIOS || Platform.isMacOS;
+    } catch (e) {
+      return false; // Web or other platforms
+    }
+  }
+
+  /// Handle successful purchase from Apple
+  void _onPurchaseSuccess(dynamic purchaseDetails) {
+    if (kDebugMode) {
+      debugPrint('✅ Purchase successful - updating user plan');
+    }
+    
+    final selectedPlan = _plans[_selectedPlanIndex];
+    
+    // Update local user plan
+    _userService.upgradePlan(selectedPlan.plan);
+    
+    setState(() {
+      _isLoading = false;
+      _errorMessage = null;
+    });
+    
+    // Show success message
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('🎉 Successfully subscribed to ${selectedPlan.name}!'),
+          backgroundColor: AppColors.greenlightNeon,
+        ),
+      );
+      
+      // Navigate to home
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
+        (route) => false,
+      );
+    }
+  }
+
+  /// Handle purchase error from Apple
+  void _onPurchaseError(String error) {
+    if (kDebugMode) {
+      debugPrint('❌ Purchase error: $error');
+    }
+    
+    setState(() {
+      _isLoading = false;
+      _errorMessage = error;
+    });
+    
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Purchase failed: $error'),
+          backgroundColor: AppColors.cutRed,
+        ),
+      );
+    }
+  }
+
+  /// Handle purchase cancellation by user
+  void _onPurchaseCancelled() {
+    if (kDebugMode) {
+      debugPrint('🚫 Purchase cancelled by user');
+    }
+    
+    setState(() {
+      _isLoading = false;
+      _errorMessage = null;
+    });
+  }
+
+  /// Select and purchase a plan
   Future<void> _selectPlan() async {
+    final selectedPlan = _plans[_selectedPlanIndex];
+    
+    // Free plan - no payment required
+    if (selectedPlan.plan == SubscriptionPlan.free) {
+      await _selectFreePlan();
+      return;
+    }
+    
+    // Paid plan on Apple platform - use In-App Purchase
+    if (_isApplePlatform && selectedPlan.productId != null) {
+      await _purchaseWithApple(selectedPlan);
+      return;
+    }
+    
+    // Non-Apple platform or IAP not available - show info message
+    _showNonApplePlatformMessage(selectedPlan);
+  }
+
+  /// Select free plan (no payment)
+  Future<void> _selectFreePlan() async {
     setState(() => _isLoading = true);
 
     try {
-      final selectedPlan = _plans[_selectedPlanIndex];
-      await _userService.upgradePlan(selectedPlan.plan);
+      await _userService.upgradePlan(SubscriptionPlan.free);
       
       if (mounted) {
         Navigator.of(context).pushAndRemoveUntil(
@@ -78,6 +236,185 @@ class _PlanSelectionScreenState extends State<PlanSelectionScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Failed to select plan. Please try again.'),
+            backgroundColor: AppColors.cutRed,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  /// Purchase subscription through Apple In-App Purchase
+  Future<void> _purchaseWithApple(_PlanInfo plan) async {
+    if (!_iapService.isAvailable) {
+      setState(() {
+        _errorMessage = 'In-App Purchase is not available. Please check your device settings.';
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_errorMessage!),
+          backgroundColor: AppColors.cutRed,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    if (kDebugMode) {
+      debugPrint('🛒 Initiating Apple purchase for: ${plan.productId}');
+    }
+
+    try {
+      // This will show the Apple payment sheet
+      final success = await _iapService.purchaseSubscription(plan.productId!);
+      
+      if (!success && mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = _iapService.pendingError ?? 'Failed to initiate purchase';
+        });
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_errorMessage!),
+            backgroundColor: AppColors.cutRed,
+          ),
+        );
+      }
+      // If success, the purchase callbacks will handle the rest
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'Purchase error: $e';
+        });
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_errorMessage!),
+            backgroundColor: AppColors.cutRed,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Show message for non-Apple platforms
+  void _showNonApplePlatformMessage(_PlanInfo plan) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.editingBay,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.phone_iphone,
+              size: 48,
+              color: plan.color,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Subscribe on iOS',
+              style: TextStyle(
+                color: AppColors.scriptPrimary,
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'To subscribe to ${plan.name}, please use the Tinseltown IQ app on your iPhone or iPad.',
+              style: const TextStyle(
+                color: AppColors.stageDirection,
+                fontSize: 15,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: plan.color,
+                foregroundColor: AppColors.midnightPremiere,
+                minimumSize: const Size(double.infinity, 48),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text('Got it'),
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Restore previous purchases
+  Future<void> _restorePurchases() async {
+    if (!_isApplePlatform || !_iapService.isAvailable) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Restore purchases is only available on iOS'),
+          backgroundColor: AppColors.stageDirection,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      await _iapService.restorePurchases();
+      
+      // Check if any subscriptions were restored
+      if (_iapService.hasActiveSubscription) {
+        final restoredPlan = _iapService.hasStudioSubscription 
+            ? SubscriptionPlan.studio 
+            : SubscriptionPlan.professional;
+        
+        await _userService.upgradePlan(restoredPlan);
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('✅ Purchases restored successfully!'),
+              backgroundColor: AppColors.greenlightNeon,
+            ),
+          );
+          
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
+            (route) => false,
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('No previous purchases found'),
+              backgroundColor: AppColors.stageDirection,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Restore failed: $e'),
             backgroundColor: AppColors.cutRed,
           ),
         );
@@ -355,6 +692,21 @@ class _PlanSelectionScreenState extends State<PlanSelectionScreen> {
                       fontSize: 13,
                     ),
                   ),
+                  // Restore purchases button (iOS only)
+                  if (_isApplePlatform) ...[
+                    const SizedBox(height: 8),
+                    TextButton(
+                      onPressed: _isLoading ? null : _restorePurchases,
+                      child: const Text(
+                        'Restore Purchases',
+                        style: TextStyle(
+                          color: AppColors.stageDirection,
+                          fontSize: 13,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -373,6 +725,7 @@ class _PlanInfo {
   final SubscriptionPlan plan;
   final Color color;
   final bool isPopular;
+  final String? productId; // Apple In-App Purchase product ID
 
   _PlanInfo({
     required this.name,
@@ -382,5 +735,20 @@ class _PlanInfo {
     required this.plan,
     required this.color,
     this.isPopular = false,
+    this.productId,
   });
+
+  /// Create a copy with updated price (from App Store)
+  _PlanInfo copyWith({String? price}) {
+    return _PlanInfo(
+      name: name,
+      price: price ?? this.price,
+      period: period,
+      features: features,
+      plan: plan,
+      color: color,
+      isPopular: isPopular,
+      productId: productId,
+    );
+  }
 }
