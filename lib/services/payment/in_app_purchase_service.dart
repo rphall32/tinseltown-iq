@@ -24,10 +24,10 @@ class InAppPurchaseService extends ChangeNotifier {
   // ═══════════════════════════════════════════════════════════════
   
   /// Product ID for Professional Monthly subscription ($29.99/month)
-  static const String professionalMonthlyProductId = 'tinseltown_iq_professional_monthly';
+  static const String professionalMonthlyProductId = 'tinseltown_iq_pro_monthly';
   
   /// Product ID for Studio Monthly subscription ($99.99/month)
-  static const String studioMonthlyProductId = 'tinseltown_iq_studio_monthly';
+  static const String studioMonthlyProductId = 'tinseltown_iq_studio_sub_monthly';
   
   /// All available product IDs
   static const Set<String> productIds = {
