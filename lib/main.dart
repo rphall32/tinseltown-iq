@@ -7382,12 +7382,16 @@ class _UpgradePlanCardState extends State<_UpgradePlanCard> {
     
     if (!iapService.isAvailable) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('In-App Purchase is not available. Please check your device settings.'),
-            backgroundColor: AppColors.cutRed,
-          ),
-        );
+        _showSubscriptionUnavailableDialog('In-App Purchase is not available on this device.');
+      }
+      return;
+    }
+    
+    // Check if the product is loaded
+    final product = iapService.getProduct(_iapProductId!);
+    if (product == null) {
+      if (context.mounted) {
+        _showSubscriptionUnavailableDialog('This subscription is being set up. Please try again in a few minutes.');
       }
       return;
     }
@@ -7408,12 +7412,7 @@ class _UpgradePlanCardState extends State<_UpgradePlanCard> {
     
     iapService.onPurchaseError = (error) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Purchase failed: $error'),
-            backgroundColor: AppColors.cutRed,
-          ),
-        );
+        _showSubscriptionUnavailableDialog('Unable to complete purchase. Please try again later.');
       }
     };
     
@@ -7425,6 +7424,42 @@ class _UpgradePlanCardState extends State<_UpgradePlanCard> {
     
     // This will show the Apple payment sheet
     await iapService.purchaseSubscription(_iapProductId!);
+  }
+  
+  /// Show a friendly dialog when subscription is unavailable
+  void _showSubscriptionUnavailableDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.editingBay,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'Subscription Unavailable',
+          style: TextStyle(color: AppColors.scriptPrimary, fontWeight: FontWeight.w600),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              message,
+              style: const TextStyle(color: AppColors.stageDirection, fontSize: 15),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'You can continue using the Free plan with 3 scans per month.',
+              style: TextStyle(color: AppColors.dialogueSecondary, fontSize: 14),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('OK', style: TextStyle(color: widget.isPremium ? AppColors.oscarGold : AppColors.stageDirection)),
+          ),
+        ],
+      ),
+    );
   }
   
   /// Process Stripe payment (non-iOS platforms)

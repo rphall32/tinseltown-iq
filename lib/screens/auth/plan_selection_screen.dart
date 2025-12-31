@@ -249,16 +249,17 @@ class _PlanSelectionScreenState extends State<PlanSelectionScreen> {
 
   /// Purchase subscription through Apple In-App Purchase
   Future<void> _purchaseWithApple(_PlanInfo plan) async {
+    // Check if IAP is available
     if (!_iapService.isAvailable) {
-      setState(() {
-        _errorMessage = 'In-App Purchase is not available. Please check your device settings.';
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_errorMessage!),
-          backgroundColor: AppColors.cutRed,
-        ),
-      );
+      _showSubscriptionUnavailableDialog(plan, 'In-App Purchase is not available on this device.');
+      return;
+    }
+
+    // Check if the product is loaded
+    final product = _iapService.getProduct(plan.productId!);
+    if (product == null) {
+      // Product not found - show friendly message instead of error
+      _showSubscriptionUnavailableDialog(plan, 'This subscription is being set up. Please try again in a few minutes.');
       return;
     }
 
@@ -281,12 +282,8 @@ class _PlanSelectionScreenState extends State<PlanSelectionScreen> {
           _errorMessage = _iapService.pendingError ?? 'Failed to initiate purchase';
         });
         
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_errorMessage!),
-            backgroundColor: AppColors.cutRed,
-          ),
-        );
+        // Show friendly dialog instead of error snackbar
+        _showSubscriptionUnavailableDialog(plan, _errorMessage!);
       }
       // If success, the purchase callbacks will handle the rest
     } catch (e) {
@@ -296,14 +293,45 @@ class _PlanSelectionScreenState extends State<PlanSelectionScreen> {
           _errorMessage = 'Purchase error: $e';
         });
         
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_errorMessage!),
-            backgroundColor: AppColors.cutRed,
-          ),
-        );
+        _showSubscriptionUnavailableDialog(plan, 'Unable to process purchase. Please try again later.');
       }
     }
+  }
+
+  /// Show a friendly dialog when subscription is unavailable
+  void _showSubscriptionUnavailableDialog(_PlanInfo plan, String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.editingBay,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          'Subscription Unavailable',
+          style: TextStyle(color: AppColors.scriptPrimary, fontWeight: FontWeight.w600),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              message,
+              style: TextStyle(color: AppColors.stageDirection, fontSize: 15),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'You can continue using the Free plan with 3 scans per month.',
+              style: TextStyle(color: AppColors.dialogueSecondary, fontSize: 14),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('OK', style: TextStyle(color: plan.color)),
+          ),
+        ],
+      ),
+    );
   }
 
   /// Show message for non-Apple platforms
