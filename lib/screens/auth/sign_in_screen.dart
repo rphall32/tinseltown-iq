@@ -83,9 +83,20 @@ class _SignInScreenState extends State<SignInScreen> {
           return;
         }
       }
-      setState(() => _error = oauthResult.error ?? 'Google sign in failed');
+      // Show user-friendly message instead of technical error
+      if (mounted) {
+        _showSignInErrorDialog(
+          'Google Sign In',
+          oauthResult.error ?? 'Unable to sign in with Google. Please try again or use email sign in.',
+        );
+      }
     } catch (e) {
-      setState(() => _error = 'Google sign in not available');
+      if (mounted) {
+        _showSignInErrorDialog(
+          'Google Sign In',
+          'Google Sign In is temporarily unavailable. Please use email sign in instead.',
+        );
+      }
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -117,14 +128,60 @@ class _SignInScreenState extends State<SignInScreen> {
           return;
         }
       }
-      setState(() => _error = oauthResult.error ?? 'Apple sign in failed');
+      // Show user-friendly message instead of technical error
+      if (mounted) {
+        _showSignInErrorDialog(
+          'Apple Sign In',
+          oauthResult.error ?? 'Unable to sign in with Apple. Please try again or use email sign in.',
+        );
+      }
     } catch (e) {
-      setState(() => _error = 'Apple sign in not available');
+      if (mounted) {
+        _showSignInErrorDialog(
+          'Apple Sign In',
+          'Apple Sign In is temporarily unavailable. Please use email sign in instead.',
+        );
+      }
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  void _showSignInErrorDialog(String provider, String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.editingBay,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          '$provider Unavailable',
+          style: const TextStyle(color: AppColors.scriptPrimary, fontWeight: FontWeight.w600),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              message,
+              style: const TextStyle(color: AppColors.stageDirection, fontSize: 15),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'You can still sign in using your email and password.',
+              style: TextStyle(color: AppColors.dialogueSecondary, fontSize: 14),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK', style: TextStyle(color: AppColors.oscarGold)),
+          ),
+        ],
+      ),
+    );
   }
 
   @override

@@ -251,16 +251,28 @@ class _PlanSelectionScreenState extends State<PlanSelectionScreen> {
   Future<void> _purchaseWithApple(_PlanInfo plan) async {
     // Check if IAP is available
     if (!_iapService.isAvailable) {
-      _showSubscriptionUnavailableDialog(plan, 'In-App Purchase is not available on this device.');
-      return;
+      // Try to re-initialize IAP
+      await _iapService.initialize();
+      
+      if (!_iapService.isAvailable) {
+        _showSubscriptionUnavailableDialog(plan, 'In-App Purchase is not available on this device. Please check your App Store settings.');
+        return;
+      }
     }
 
-    // Check if the product is loaded
-    final product = _iapService.getProduct(plan.productId!);
+    // Check if the product is loaded - if not, try to refresh
+    var product = _iapService.getProduct(plan.productId!);
     if (product == null) {
-      // Product not found - show friendly message instead of error
-      _showSubscriptionUnavailableDialog(plan, 'This subscription is being set up. Please try again in a few minutes.');
-      return;
+      // Try refreshing products from App Store
+      await _iapService.refreshProducts();
+      product = _iapService.getProduct(plan.productId!);
+      
+      if (product == null) {
+        // Still not found - this likely means the product isn't configured in App Store Connect
+        // or hasn't been approved yet
+        _showSubscriptionUnavailableDialog(plan, 'This subscription is currently being processed. Please try again shortly.');
+        return;
+      }
     }
 
     setState(() {

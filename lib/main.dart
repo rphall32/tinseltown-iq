@@ -1184,14 +1184,38 @@ class OAuthService {
   // Google Sign-In
   Future<OAuthResult> signInWithGoogle() async {
     try {
+      // Check if Google Sign-In is properly configured
+      // On iOS, this requires proper GoogleService-Info.plist and URL schemes
+      
       // Check if already signed in
-      GoogleSignInAccount? account = _googleSignIn.currentUser;
+      GoogleSignInAccount? account;
+      
+      try {
+        account = _googleSignIn.currentUser;
+      } catch (e) {
+        // Current user check failed - continue anyway
+      }
       
       // Try silent sign in first
-      account ??= await _googleSignIn.signInSilently();
+      if (account == null) {
+        try {
+          account = await _googleSignIn.signInSilently();
+        } catch (e) {
+          // Silent sign in failed - continue to interactive
+        }
+      }
       
       // If still null, show sign in dialog
-      account ??= await _googleSignIn.signIn();
+      if (account == null) {
+        try {
+          account = await _googleSignIn.signIn();
+        } catch (e) {
+          return OAuthResult(
+            success: false,
+            error: 'Google Sign-In is not configured for this app.',
+          );
+        }
+      }
       
       if (account == null) {
         return OAuthResult(
@@ -1214,9 +1238,10 @@ class OAuthService {
         provider: 'google',
       );
     } catch (e) {
+      // Catch ALL errors to prevent crashes
       return OAuthResult(
         success: false,
-        error: 'Google Sign-In failed: ${e.toString()}',
+        error: 'Google Sign-In is currently unavailable.',
       );
     }
   }
@@ -1234,12 +1259,21 @@ class OAuthService {
   Future<OAuthResult> signInWithApple() async {
     try {
       // Check if Apple Sign-In is available (only on iOS/macOS/Web)
-      final isAvailable = await SignInWithApple.isAvailable();
+      bool isAvailable = false;
+      try {
+        isAvailable = await SignInWithApple.isAvailable();
+      } catch (e) {
+        // If check fails, assume not available
+        return OAuthResult(
+          success: false,
+          error: 'Apple Sign-In is not configured for this app.',
+        );
+      }
       
       if (!isAvailable && !kIsWeb) {
         return OAuthResult(
           success: false,
-          error: 'Apple Sign-In is not available on this device',
+          error: 'Apple Sign-In is not available on this device.',
         );
       }
 
@@ -1254,10 +1288,7 @@ class OAuthService {
           AppleIDAuthorizationScopes.fullName,
         ],
         nonce: nonce,
-        webAuthenticationOptions: kIsWeb ? WebAuthenticationOptions(
-          clientId: 'com.tinseltowniq.film', // Your Apple Service ID
-          redirectUri: Uri.parse('https://your-app-domain.com/callbacks/apple'),
-        ) : null,
+        // Don't use web options on native iOS - it causes issues
       );
 
       // Extract user info
@@ -1290,12 +1321,13 @@ class OAuthService {
       }
       return OAuthResult(
         success: false,
-        error: 'Apple Sign-In failed: ${e.message}',
+        error: 'Apple Sign-In is currently unavailable.',
       );
     } catch (e) {
+      // Catch ALL errors to prevent crashes
       return OAuthResult(
         success: false,
-        error: 'Apple Sign-In failed: ${e.toString()}',
+        error: 'Apple Sign-In is currently unavailable.',
       );
     }
   }
@@ -7381,19 +7413,30 @@ class _UpgradePlanCardState extends State<_UpgradePlanCard> {
     }
     
     if (!iapService.isAvailable) {
-      if (context.mounted) {
-        _showSubscriptionUnavailableDialog('In-App Purchase is not available on this device.');
+      // Try re-initializing
+      await iapService.initialize();
+      
+      if (!iapService.isAvailable) {
+        if (context.mounted) {
+          _showSubscriptionUnavailableDialog('In-App Purchase is not available on this device. Please check your App Store settings.');
+        }
+        return;
       }
-      return;
     }
     
-    // Check if the product is loaded
-    final product = iapService.getProduct(_iapProductId!);
+    // Check if the product is loaded - if not, try to refresh
+    var product = iapService.getProduct(_iapProductId!);
     if (product == null) {
-      if (context.mounted) {
-        _showSubscriptionUnavailableDialog('This subscription is being set up. Please try again in a few minutes.');
+      // Try refreshing products from App Store
+      await iapService.refreshProducts();
+      product = iapService.getProduct(_iapProductId!);
+      
+      if (product == null) {
+        if (context.mounted) {
+          _showSubscriptionUnavailableDialog('This subscription is currently being processed. Please try again shortly.');
+        }
+        return;
       }
-      return;
     }
     
     // Set up callbacks
