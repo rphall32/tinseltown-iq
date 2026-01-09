@@ -319,25 +319,11 @@ class _SignInScreenState extends State<SignInScreen> {
 
               const SizedBox(height: 24),
 
-              // Social buttons
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildSocialButton(
-                      icon: Icons.g_mobiledata,
-                      label: 'Google',
-                      onPressed: _isLoading ? null : _signInWithGoogle,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildSocialButton(
-                      icon: Icons.apple,
-                      label: 'Apple',
-                      onPressed: _isLoading ? null : _signInWithApple,
-                    ),
-                  ),
-                ],
+              // Social buttons - Apple Sign In only (Google Sign In not configured)
+              _buildSocialButton(
+                icon: Icons.apple,
+                label: 'Sign in with Apple',
+                onPressed: _isLoading ? null : _signInWithApple,
               ),
 
               const SizedBox(height: 32),
