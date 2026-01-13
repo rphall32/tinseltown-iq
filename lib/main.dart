@@ -64,6 +64,10 @@ import 'services/comparables/v4_franchise_analyzer.dart';
 import 'services/comparables/v4_semantic_matcher.dart';
 // V5 Cognitive Engine - 3x Deeper Analysis
 import 'services/comparables/v5_cognitive_engine.dart';
+// PDF Export Service
+import 'services/export/pdf_export_service.dart';
+// Concept History Service
+import 'services/history/concept_history_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -12878,6 +12882,74 @@ Analyzed by Tinseltown IQ™''';
             
             const SizedBox(height: 24),
             
+            // PDF Export Options
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Export PDF',
+                    style: TextStyle(
+                      color: AppColors.oscarGold,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildExportButton(
+                          context,
+                          Icons.description,
+                          'Executive Summary',
+                          'Quick overview',
+                          () => _exportPdf(context, PDFReportType.executiveSummary),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildExportButton(
+                          context,
+                          Icons.article,
+                          'Full Report',
+                          'All details',
+                          () => _exportPdf(context, PDFReportType.fullReport),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildExportButton(
+                          context,
+                          Icons.business,
+                          'Buyer Package',
+                          'For submissions',
+                          () => _exportPdf(context, PDFReportType.buyerPackage),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildExportButton(
+                          context,
+                          Icons.slideshow,
+                          'Pitch Deck',
+                          'Presentation',
+                          () => _exportPdf(context, PDFReportType.pitchDeck),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            
+            const SizedBox(height: 24),
+            
             // Share with team
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -12946,6 +13018,162 @@ Analyzed by Tinseltown IQ™''';
         ],
       ),
     );
+  }
+  
+  Widget _buildExportButton(BuildContext context, IconData icon, String title, String subtitle, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppColors.editingBay,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.backstage),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppColors.oscarGold.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, color: AppColors.oscarGold, size: 20),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: AppColors.scriptPrimary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      color: AppColors.stageDirection,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Future<void> _exportPdf(BuildContext context, PDFReportType reportType) async {
+    Navigator.pop(context); // Close the share options sheet
+    
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => Center(
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: AppColors.soundstageDark,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(color: AppColors.oscarGold),
+              const SizedBox(height: 16),
+              Text(
+                'Generating ${reportType.displayName}...',
+                style: const TextStyle(color: AppColors.scriptPrimary),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    
+    try {
+      final pdfService = PDFExportService();
+      
+      // Convert AnalysisResult to PDFReportData
+      final pdfData = PDFReportData(
+        projectTitle: result.projectTitle,
+        logline: result.concept.logline,
+        synopsis: result.concept.synopsis,
+        format: result.concept.format,
+        genre: result.concept.genre,
+        secondaryGenre: result.concept.secondaryGenre,
+        tone: result.concept.tone,
+        targetAudience: result.concept.targetAudience,
+        greenlightScore: result.greenlightScore,
+        verdict: result.verdict,
+        verdictDescription: result.verdictDescription,
+        similarityRisk: result.similarityRisk,
+        similarityDescription: result.similarityDescription,
+        topBuyers: result.topBuyers.map((b) => PDFBuyerData(
+          name: b.name,
+          type: b.type,
+          matchPercent: b.matchPercent,
+          reason: b.reason,
+          lookingFor: b.lookingFor,
+        )).toList(),
+        topProducers: result.topProducers.map((p) => PDFProducerData(
+          name: p.name,
+          company: p.company,
+          matchPercent: p.matchPercent,
+          specialty: p.specialty,
+          budgetRange: p.budgetRange,
+        )).toList(),
+        similarTitles: result.similarTitles.map((t) => PDFSimilarTitleData(
+          title: t.title,
+          year: t.year,
+          similarityPercent: t.similarityPercent,
+          platform: t.platform,
+          differentiator: t.differentiator,
+        )).toList(),
+        marketInsights: PDFMarketInsightsData(
+          genreTrend: result.marketInsights.genreTrend,
+          genreTrendPercent: result.marketInsights.genreTrendPercent,
+          genreTrendUp: result.marketInsights.genreTrendUp,
+          platformFit: result.marketInsights.platformFit,
+          budgetRecommendation: result.marketInsights.budgetRecommendation,
+          targetAudience: result.marketInsights.targetAudience,
+          timingAdvice: result.marketInsights.timingAdvice,
+        ),
+      );
+      
+      final pdfBytes = await pdfService.generateReport(
+        data: pdfData,
+        reportType: reportType,
+      );
+      
+      // Close loading dialog
+      if (context.mounted) Navigator.pop(context);
+      
+      // Share/print the PDF
+      await Printing.sharePdf(
+        bytes: pdfBytes,
+        filename: '${result.projectTitle.replaceAll(' ', '_')}_${reportType.name}.pdf',
+      );
+      
+      if (context.mounted) {
+        AppNotifications.showSuccess(context, '${reportType.displayName} exported successfully!');
+      }
+    } catch (e) {
+      // Close loading dialog
+      if (context.mounted) Navigator.pop(context);
+      
+      if (context.mounted) {
+        AppNotifications.showError(context, 'Failed to export PDF: ${e.toString()}');
+      }
+    }
   }
   
   void _showShareWithTeam(BuildContext context) {
